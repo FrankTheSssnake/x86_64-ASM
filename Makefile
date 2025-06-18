@@ -1,20 +1,36 @@
-# Compiler and flags
-AS = nasm
-LD = ld
-CFLAGS = -f elf64
+# Define directories
+SRC_DIR := src
+BUILD_DIR := build
+BIN_DIR := bin
 
-# Targets and dependencies
-all: main
+# Files
+ASM_SRCS := $(wildcard $(SRC_DIR)/*.asm)
+OBJS := $(patsubst $(SRC_DIR)/%.asm,$(BUILD_DIR)/%.o,$(ASM_SRCS))
+TARGET := $(BIN_DIR)/main
 
-main: main.o extra.o
-	$(LD) -o main main.o extra.o
+NASM := nasm
+NASMFLAGS := -f elf64
 
-main.o: main.asm
-	$(AS) $(CFLAGS) -o main.o main.asm
+LD := ld
+LDFLAGS :=
 
-extra.o: extra.asm
-	$(AS) $(CFLAGS) -o extra.o extra.asm
+# Default target
+all: $(TARGET)
 
+# Link final executable
+$(TARGET): $(OBJS) | $(BIN_DIR)
+	$(LD) $(LDFLAGS) -o $@ $(OBJS)
+
+# Compile .asm to .o
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.asm | $(BUILD_DIR)
+	$(NASM) $(NASMFLAGS) $< -o $@
+
+# Create necessary directories if they don't exist
+$(BUILD_DIR) $(BIN_DIR):
+	mkdir -p $@
+
+# Clean up build artifacts
 clean:
-	rm -f *.o main
+	rm -rf $(BUILD_DIR) $(BIN_DIR)
 
+.PHONY: all clean
